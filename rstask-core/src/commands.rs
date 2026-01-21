@@ -93,21 +93,20 @@ pub fn cmd_add(conf: &Config, ctx: &Query, query: &Query) -> Result<()> {
 
 /// Set or display the current context
 pub fn cmd_context(
-    conf: &Config,
     state: &mut LocalState,
     ctx: &Query,
     query: &Query,
     args: &[String],
 ) -> Result<()> {
     if args.len() < 3 {
-        println!("{}", ctx.to_string());
+        println!("{}", ctx);
     } else if args[2] == "none" {
         state.set_context(Query::default())?;
     } else {
         state.set_context(query.clone())?;
     }
 
-    state.save(&conf.state_file)?;
+    state.save()?;
     Ok(())
 }
 

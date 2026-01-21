@@ -51,12 +51,12 @@ impl LocalState {
     }
 
     /// Save state to file
-    pub fn save(&self, state_file: &Path) -> Result<()> {
-        if let Some(parent) = state_file.parent() {
+    pub fn save(&self) -> Result<()> {
+        if let Some(parent) = self.state_file.parent() {
             std::fs::create_dir_all(parent)?;
         }
         let data = bincode::serialize(&self.context)?;
-        std::fs::write(state_file, data)?;
+        std::fs::write(&self.state_file, data)?;
         Ok(())
     }
 }

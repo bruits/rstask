@@ -90,7 +90,7 @@ fn main() {
         CMD_START => cmd_start(&conf, &ctx, &query),
         CMD_STOP => cmd_stop(&conf, &ctx, &query),
         CMD_DONE | CMD_RESOLVE => cmd_done(&conf, &ctx, &query),
-        CMD_CONTEXT => cmd_context(&conf, &mut state, &ctx, &query, &args),
+        CMD_CONTEXT => cmd_context(&mut state, &ctx, &query, &args),
         CMD_MODIFY => cmd_modify(&conf, &ctx, &query),
         CMD_EDIT => cmd_edit(&conf, &ctx, &query),
         CMD_NOTE | CMD_NOTES => cmd_note(&conf, &ctx, &query),

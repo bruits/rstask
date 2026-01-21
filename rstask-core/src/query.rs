@@ -4,6 +4,7 @@ use crate::date_util::parse_due_date_arg;
 use crate::util::slice_contains;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct Query {
@@ -28,56 +29,6 @@ impl Query {
     /// Creates an empty query
     pub fn new() -> Self {
         Self::default()
-    }
-
-    /// Reconstructs the query as a string
-    pub fn to_string(&self) -> String {
-        let mut args = Vec::new();
-
-        for id in &self.ids {
-            args.push(id.to_string());
-        }
-
-        for tag in &self.tags {
-            args.push(format!("+{}", tag));
-        }
-
-        for tag in &self.anti_tags {
-            args.push(format!("-{}", tag));
-        }
-
-        if !self.project.is_empty() {
-            args.push(format!("project:{}", self.project));
-        }
-
-        for project in &self.anti_projects {
-            args.push(format!("-project:{}", project));
-        }
-
-        if let Some(due) = &self.due {
-            let mut due_arg = "due".to_string();
-            if !self.date_filter.is_empty() {
-                due_arg.push('.');
-                due_arg.push_str(&self.date_filter);
-            }
-            due_arg.push(':');
-            due_arg.push_str(&due.format("%Y-%m-%d").to_string());
-            args.push(due_arg);
-        }
-
-        if !self.priority.is_empty() {
-            args.push(self.priority.clone());
-        }
-
-        if self.template > 0 {
-            args.push(format!("template:{}", self.template));
-        }
-
-        if !self.text.is_empty() {
-            args.push(format!("\"{}\"", self.text));
-        }
-
-        args.join(" ")
     }
 
     /// Prints context description with color
@@ -175,23 +126,26 @@ pub fn parse_query(args: &[String]) -> Result<Query> {
         }
 
         // Check for ID (only before any other token)
-        if !ids_exhausted
-            && let Ok(id) = item.parse::<i32>() {
-                query.ids.push(id);
-                continue;
-            }
+        if !ids_exhausted && let Ok(id) = item.parse::<i32>() {
+            query.ids.push(id);
+            continue;
+        }
 
         // Check for special keywords
         if item == IGNORE_CONTEXT_KEYWORD {
             query.ignore_context = true;
         } else if item == NOTE_MODE_KEYWORD {
             notes_mode_activated = true;
-        } else if query.project.is_empty() && lc_item.starts_with("project:") {
-            query.project = lc_item[8..].to_string();
-        } else if query.project.is_empty() && lc_item.starts_with("+project:") {
-            query.project = lc_item[9..].to_string();
-        } else if lc_item.starts_with("-project:") {
-            query.anti_projects.push(lc_item[9..].to_string());
+        } else if let Some(proj) = lc_item.strip_prefix("project:") {
+            if query.project.is_empty() {
+                query.project = proj.to_string();
+            }
+        } else if let Some(proj) = lc_item.strip_prefix("+project:") {
+            if query.project.is_empty() {
+                query.project = proj.to_string();
+            }
+        } else if let Some(proj) = lc_item.strip_prefix("-project:") {
+            query.anti_projects.push(proj.to_string());
         } else if lc_item.starts_with("due.") || lc_item.starts_with("due:") {
             if due_date_set {
                 return Err(crate::RstaskError::Parse(
@@ -202,14 +156,18 @@ pub fn parse_query(args: &[String]) -> Result<Query> {
             query.date_filter = date_filter;
             query.due = Some(due_date.with_timezone(&Utc));
             due_date_set = true;
-        } else if lc_item.starts_with("template:") {
-            if let Ok(template_id) = lc_item[9..].parse::<i32>() {
+        } else if let Some(template_str) = lc_item.strip_prefix("template:") {
+            if let Ok(template_id) = template_str.parse::<i32>() {
                 query.template = template_id;
             }
-        } else if item.len() > 1 && item.starts_with('+') {
-            query.tags.push(lc_item[1..].to_string());
-        } else if item.len() > 1 && item.starts_with('-') {
-            query.anti_tags.push(lc_item[1..].to_string());
+        } else if let Some(tag) = lc_item.strip_prefix('+') {
+            if !tag.is_empty() {
+                query.tags.push(tag.to_string());
+            }
+        } else if let Some(tag) = lc_item.strip_prefix('-') {
+            if !tag.is_empty() {
+                query.anti_tags.push(tag.to_string());
+            }
         } else if query.priority.is_empty() && is_valid_priority(item) {
             query.priority = item.clone();
         } else {
@@ -223,6 +181,58 @@ pub fn parse_query(args: &[String]) -> Result<Query> {
     query.note = notes.join(" ");
 
     Ok(query)
+}
+
+impl fmt::Display for Query {
+    /// Reconstructs the query as a string
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut args = Vec::new();
+
+        for id in &self.ids {
+            args.push(id.to_string());
+        }
+
+        for tag in &self.tags {
+            args.push(format!("+{}", tag));
+        }
+
+        for tag in &self.anti_tags {
+            args.push(format!("-{}", tag));
+        }
+
+        if !self.project.is_empty() {
+            args.push(format!("project:{}", self.project));
+        }
+
+        for project in &self.anti_projects {
+            args.push(format!("-project:{}", project));
+        }
+
+        if let Some(due) = &self.due {
+            let mut due_arg = "due".to_string();
+            if !self.date_filter.is_empty() {
+                due_arg.push('.');
+                due_arg.push_str(&self.date_filter);
+            }
+            due_arg.push(':');
+            due_arg.push_str(&due.format("%Y-%m-%d").to_string());
+            args.push(due_arg);
+        }
+
+        if !self.priority.is_empty() {
+            args.push(self.priority.clone());
+        }
+
+        if self.template > 0 {
+            args.push(format!("template:{}", self.template));
+        }
+
+        if !self.text.is_empty() {
+            args.push(format!("\"{}\"", self.text));
+        }
+
+        write!(f, "{}", args.join(" "))
+    }
 }
 
 #[cfg(test)]
