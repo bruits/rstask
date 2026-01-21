@@ -235,7 +235,7 @@ impl TaskSet {
         let idx = *self
             .tasks_by_uuid
             .get(&task.uuid)
-            .ok_or_else(|| crate::rstaskError::TaskNotFound(task.uuid.clone()))?;
+            .ok_or_else(|| crate::RstaskError::TaskNotFound(task.uuid.clone()))?;
 
         let old = &self.tasks[idx];
 
@@ -243,7 +243,7 @@ impl TaskSet {
         if old.status != task.status
             && !crate::constants::is_valid_status_transition(&old.status, &task.status)
         {
-            return Err(crate::rstaskError::InvalidStatusTransition(
+            return Err(crate::RstaskError::InvalidStatusTransition(
                 old.status.clone(),
                 task.status.clone(),
             ));
@@ -254,7 +254,7 @@ impl TaskSet {
             && task.status == STATUS_RESOLVED
             && task.notes.contains("- [ ] ")
         {
-            return Err(crate::rstaskError::Other(
+            return Err(crate::RstaskError::Other(
                 "Refusing to resolve task with incomplete checklist".to_string(),
             ));
         }
@@ -393,11 +393,10 @@ impl TaskSet {
                 project.created = task.created;
             }
 
-            if let Some(task_resolved) = task.resolved {
-                if task_resolved > project.resolved {
+            if let Some(task_resolved) = task.resolved
+                && task_resolved > project.resolved {
                     project.resolved = task_resolved;
                 }
-            }
 
             if task.status == STATUS_RESOLVED {
                 project.tasks_resolved += 1;
@@ -471,7 +470,7 @@ impl TaskSet {
         let idx = *self
             .tasks_by_uuid
             .get(uuid)
-            .ok_or_else(|| crate::rstaskError::TaskNotFound(uuid.to_string()))?;
+            .ok_or_else(|| crate::RstaskError::TaskNotFound(uuid.to_string()))?;
 
         let task = &self.tasks[idx];
 

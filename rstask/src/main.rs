@@ -29,21 +29,15 @@ fn main() {
             return;
         }
         CMD_PRINT_BASH_COMPLETION => {
-            println!(
-                "#!/bin/bash\n# Bash completions for rstask\n_rstask_completion() {\n  local cur prev\n  COMPREPLY=()\n  cur=\"${COMP_WORDS[COMP_CWORD]}\"\n  prev=\"${COMP_WORDS[COMP_CWORD-1]}\"\n  if [[ \"${cur}\" == -* ]]; then\n    COMPREPLY=( $(compgen -W \"--help --version add done edit git help log modify note open remove resolve show-active show-open show-paused show-projects show-resolved show-tags show-templates show-unorganised start stop sync template undo\" -- \"$cur\") )\n  else\n    COMPREPLY=( $(compgen -f \"${cur}\") )\n  fi\n}\ncomplete -F _rstask_completion rstask"
-            );
+            print!("{}", include_str!("../completions/bash.sh"));
             return;
         }
         CMD_PRINT_ZSH_COMPLETION => {
-            println!(
-                "#compdef rstask\n_rstask() {\n  local -a commands\n  commands=(\n    'add:Create new task'\n    'done:Mark task complete'\n    'edit:Edit task'\n    'help:Show help'\n    'log:Log completed task'\n    'modify:Modify task'\n    'note:Add note to task'\n    'open:Reopen resolved task'\n    'remove:Delete task'\n    'resolve:Mark task complete'\n    'show-active:Show active tasks'\n    'show-open:Show open tasks'\n    'show-paused:Show paused tasks'\n    'show-projects:List projects'\n    'show-resolved:Show completed tasks'\n    'show-tags:List tags'\n    'show-templates:Show templates'\n    'show-unorganised:Show unorganised tasks'\n    'start:Start working on task'\n    'stop:Stop working on task'\n    'sync:Sync with git'\n    'template:Create template'\n    'undo:Undo last change'\n    '--version:Show version'\n  )\n  if (( CURRENT == 2 )); then\n    _describe 'commands' commands\n  fi\n}\ncompdef _rstask rstask"
-            );
+            print!("{}", include_str!("../completions/zsh.sh"));
             return;
         }
         CMD_PRINT_FISH_COMPLETION => {
-            println!(
-                "# fish completions for rstask\ncomplete -c rstask -f -a '(__fish_rstask_complete)'\nfunction __fish_rstask_complete\n  set -l cmd (commandline -opc)\n  switch $cmd\n    case '--help'\n    case '--version'\n      return\n    case '*'\n      for file in (ls *.yml 2>/dev/null)\n        echo (basename $file .yml)\n      end\n  end\nend"
-            );
+            print!("{}", include_str!("../completions/completions.fish"));
             return;
         }
         _ => {}

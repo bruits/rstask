@@ -55,11 +55,10 @@ pub fn parse_str_to_date(date_str: &str) -> Result<chrono::DateTime<Local>> {
     }
 
     // Check for next-[weekday], this-[weekday]
-    if let Some((selector, rest)) = lower.split_once('-') {
-        if let Some(date) = weekday_str_to_time(rest, selector) {
+    if let Some((selector, rest)) = lower.split_once('-')
+        && let Some(date) = weekday_str_to_time(rest, selector) {
             return Ok(date);
         }
-    }
 
     // Check for [weekday]
     if let Some(date) = weekday_str_to_time(&lower, "") {
@@ -67,14 +66,14 @@ pub fn parse_str_to_date(date_str: &str) -> Result<chrono::DateTime<Local>> {
     }
 
     // Try YYYY-MM-DD
-    if let Ok(naive_date) = NaiveDate::parse_from_str(&date_str, "%Y-%m-%d") {
+    if let Ok(naive_date) = NaiveDate::parse_from_str(date_str, "%Y-%m-%d") {
         return Ok(Local
             .from_local_datetime(&naive_date.and_hms_opt(0, 0, 0).unwrap())
             .unwrap());
     }
 
     // Try MM-DD
-    if let Ok(naive_date) = NaiveDate::parse_from_str(&date_str, "%m-%d") {
+    if let Ok(naive_date) = NaiveDate::parse_from_str(date_str, "%m-%d") {
         let with_year = naive_date.with_year(now.year()).unwrap();
         return Ok(Local
             .from_local_datetime(&with_year.and_hms_opt(0, 0, 0).unwrap())
@@ -82,17 +81,15 @@ pub fn parse_str_to_date(date_str: &str) -> Result<chrono::DateTime<Local>> {
     }
 
     // Try DD (day of month)
-    if let Ok(day) = date_str.parse::<u32>() {
-        if day >= 1 && day <= 31 {
-            if let Some(naive_date) = NaiveDate::from_ymd_opt(now.year(), now.month(), day) {
+    if let Ok(day) = date_str.parse::<u32>()
+        && (1..=31).contains(&day)
+            && let Some(naive_date) = NaiveDate::from_ymd_opt(now.year(), now.month(), day) {
                 return Ok(Local
                     .from_local_datetime(&naive_date.and_hms_opt(0, 0, 0).unwrap())
                     .unwrap());
             }
-        }
-    }
 
-    Err(crate::rstaskError::Parse(format!(
+    Err(crate::RstaskError::Parse(format!(
         "Invalid due date format: {}\nExpected format: YYYY-MM-DD, MM-DD or DD, relative date like 'next-monday', 'today', etc.",
         date_str
     )))
@@ -102,7 +99,7 @@ pub fn parse_str_to_date(date_str: &str) -> Result<chrono::DateTime<Local>> {
 pub fn parse_due_date_arg(due_str: &str) -> Result<(String, chrono::DateTime<Local>)> {
     let parts: Vec<&str> = due_str.splitn(2, ':').collect();
     if parts.len() != 2 {
-        return Err(crate::rstaskError::Parse(format!(
+        return Err(crate::RstaskError::Parse(format!(
             "Invalid due query format: {}\nExpected format: due:YYYY-MM-DD, due:MM-DD, due:DD, due:next-monday, due:today, etc.",
             due_str
         )));
@@ -122,7 +119,7 @@ pub fn parse_due_date_arg(due_str: &str) -> Result<(String, chrono::DateTime<Loc
         match filter {
             "after" | "before" | "on" | "in" => filter.to_string(),
             _ => {
-                return Err(crate::rstaskError::Parse(format!(
+                return Err(crate::RstaskError::Parse(format!(
                     "Invalid date filter format: {}\nValid filters are: after, before, on, in",
                     filter
                 )));

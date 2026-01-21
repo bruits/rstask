@@ -75,7 +75,11 @@ impl Table {
         // Iteratively reduce widths to fit budget
         while widths.iter().sum::<usize>() > width_budget {
             // Find max width column
-            let (max_idx, &max_width) = widths.iter().enumerate().max_by_key(|(_, &w)| w).unwrap();
+            let (max_idx, &max_width) = widths
+                .iter()
+                .enumerate()
+                .max_by_key(|(_, w)| w.clone())
+                .unwrap();
 
             if max_width == 0 {
                 break;

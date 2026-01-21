@@ -163,7 +163,7 @@ impl TaskSet {
         }
 
         if tasks.is_empty() {
-            return Err(crate::rstaskError::Other(
+            return Err(crate::RstaskError::Other(
                 "No matching tasks in given context or filter.".to_string(),
             ));
         }
@@ -246,11 +246,10 @@ impl TaskSet {
                     let week = resolved.iso_week().week();
 
                     if week != last_week {
-                        if let Some(t) = table {
-                            if !t.rows.is_empty() {
+                        if let Some(t) = table
+                            && !t.rows.is_empty() {
                                 t.render();
                             }
-                        }
 
                         println!(
                             "\n\n> Week {}, starting {}\n",

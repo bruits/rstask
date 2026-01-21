@@ -16,16 +16,16 @@ pub fn git_commit(repo_path: &Path, message: &str) -> Result<()> {
 
     // Add all files
     let add_status = Command::new("git")
-        .args(&["-C", &repo_path.to_string_lossy(), "add", "."])
+        .args(["-C", &repo_path.to_string_lossy(), "add", "."])
         .status()?;
 
     if !add_status.success() {
-        return Err(crate::rstaskError::Other("git add failed".to_string()));
+        return Err(crate::RstaskError::Other("git add failed".to_string()));
     }
 
     // Check if there are changes to commit
     let diff_status = Command::new("git")
-        .args(&[
+        .args([
             "-C",
             &repo_path.to_string_lossy(),
             "diff-index",
@@ -36,16 +36,15 @@ pub fn git_commit(repo_path: &Path, message: &str) -> Result<()> {
         .status();
 
     // If diff-index returns 0, no changes
-    if let Ok(status) = diff_status {
-        if status.success() {
+    if let Ok(status) = diff_status
+        && status.success() {
             eprintln!("No changes detected");
             return Ok(());
         }
-    }
 
     // Commit with output shown
     let commit_status = Command::new("git")
-        .args(&[
+        .args([
             "-C",
             &repo_path.to_string_lossy(),
             "commit",
@@ -56,7 +55,7 @@ pub fn git_commit(repo_path: &Path, message: &str) -> Result<()> {
         .status()?;
 
     if !commit_status.success() {
-        return Err(crate::rstaskError::Other("git commit failed".to_string()));
+        return Err(crate::RstaskError::Other("git commit failed".to_string()));
     }
 
     Ok(())
@@ -88,7 +87,7 @@ pub fn git_pull(repo_path: &str) -> Result<()> {
         Ok(())
     } else {
         // Would require actual merge - for now just error
-        Err(crate::rstaskError::Git(git2::Error::from_str(
+        Err(crate::RstaskError::Git(git2::Error::from_str(
             "merge required",
         )))
     }
@@ -112,7 +111,7 @@ pub fn git_reset(repo_path: &Path) -> Result<()> {
     let head_commit = head.peel_to_commit()?;
 
     let parent = head_commit.parent(0).map_err(|_| {
-        crate::rstaskError::Git(git2::Error::from_str("no parent commit to reset to"))
+        crate::RstaskError::Git(git2::Error::from_str("no parent commit to reset to"))
     })?;
 
     repo.reset(parent.as_object(), git2::ResetType::Hard, None)?;

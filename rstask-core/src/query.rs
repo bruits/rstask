@@ -175,12 +175,11 @@ pub fn parse_query(args: &[String]) -> Result<Query> {
         }
 
         // Check for ID (only before any other token)
-        if !ids_exhausted {
-            if let Ok(id) = item.parse::<i32>() {
+        if !ids_exhausted
+            && let Ok(id) = item.parse::<i32>() {
                 query.ids.push(id);
                 continue;
             }
-        }
 
         // Check for special keywords
         if item == IGNORE_CONTEXT_KEYWORD {
@@ -195,7 +194,7 @@ pub fn parse_query(args: &[String]) -> Result<Query> {
             query.anti_projects.push(lc_item[9..].to_string());
         } else if lc_item.starts_with("due.") || lc_item.starts_with("due:") {
             if due_date_set {
-                return Err(crate::rstaskError::Parse(
+                return Err(crate::RstaskError::Parse(
                     "Query should only have one due date".to_string(),
                 ));
             }
@@ -211,7 +210,7 @@ pub fn parse_query(args: &[String]) -> Result<Query> {
             query.tags.push(lc_item[1..].to_string());
         } else if item.len() > 1 && item.starts_with('-') {
             query.anti_tags.push(lc_item[1..].to_string());
-        } else if query.priority.is_empty() && is_valid_priority(&item) {
+        } else if query.priority.is_empty() && is_valid_priority(item) {
             query.priority = item.clone();
         } else {
             words.push(item.clone());

@@ -46,7 +46,7 @@ pub fn run_cmd(name: &str, args: &[&str]) -> Result<()> {
         .status()?;
 
     if !status.success() {
-        return Err(crate::rstaskError::Other(format!(
+        return Err(crate::RstaskError::Other(format!(
             "Command {} failed with status: {}",
             name, status
         )));
@@ -94,7 +94,7 @@ pub fn must_edit_bytes(data: &[u8], tmp_filename: &str) -> Result<Vec<u8>> {
     let editor_parts: Vec<&str> = editor.split_whitespace().collect();
 
     if editor_parts.is_empty() {
-        return Err(crate::rstaskError::Other("EDITOR is empty".to_string()));
+        return Err(crate::RstaskError::Other("EDITOR is empty".to_string()));
     }
 
     let mut tmpfile = tempfile::Builder::new()
@@ -120,7 +120,7 @@ pub fn must_edit_bytes(data: &[u8], tmp_filename: &str) -> Result<Vec<u8>> {
         .status()?;
 
     if !status.success() {
-        return Err(crate::rstaskError::Other(
+        return Err(crate::RstaskError::Other(
             "Failed to run $EDITOR".to_string(),
         ));
     }
@@ -163,18 +163,18 @@ pub fn must_open_browser(url: &str) -> Result<()> {
     let cmd = "open";
 
     #[cfg(target_os = "windows")]
-    let args = vec!["/c", "start", "", url];
+    let args = ["/c", "start", "", url];
 
     #[cfg(not(target_os = "windows"))]
-    let args = vec![url];
+    let args = [url];
 
     Command::new(cmd)
-        .args(&args)
+        .args(args)
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
-        .map_err(|_| crate::rstaskError::Other("Failed to open browser".to_string()))?;
+        .map_err(|_| crate::RstaskError::Other("Failed to open browser".to_string()))?;
 
     Ok(())
 }
@@ -237,31 +237,31 @@ mod tests {
 
     #[test]
     fn test_slice_contains_all() {
-        assert!(slice_contains_all(&vec![], &vec![]));
+        assert!(slice_contains_all(&[], &[]));
         assert!(slice_contains_all(
-            &vec!["one".to_string()],
-            &vec!["one".to_string()]
+            &["one".to_string()],
+            &["one".to_string()]
         ));
         assert!(!slice_contains_all(
-            &vec!["one".to_string()],
-            &vec!["two".to_string()]
+            &["one".to_string()],
+            &["two".to_string()]
         ));
-        assert!(!slice_contains_all(&vec!["one".to_string()], &vec![]));
+        assert!(!slice_contains_all(&["one".to_string()], &[]));
         assert!(slice_contains_all(
-            &vec!["one".to_string()],
-            &vec!["one".to_string(), "two".to_string()]
+            &["one".to_string()],
+            &["one".to_string(), "two".to_string()]
         ));
         assert!(slice_contains_all(
-            &vec!["two".to_string(), "one".to_string()],
-            &vec!["three".to_string(), "one".to_string(), "two".to_string()]
+            &["two".to_string(), "one".to_string()],
+            &["three".to_string(), "one".to_string(), "two".to_string()]
         ));
         assert!(!slice_contains_all(
-            &vec!["apple".to_string(), "two".to_string(), "one".to_string()],
-            &vec!["three".to_string(), "one".to_string(), "two".to_string()]
+            &["apple".to_string(), "two".to_string(), "one".to_string()],
+            &["three".to_string(), "one".to_string(), "two".to_string()]
         ));
         assert!(slice_contains_all(
-            &vec![],
-            &vec!["three".to_string(), "one".to_string(), "two".to_string()]
+            &[],
+            &["three".to_string(), "one".to_string(), "two".to_string()]
         ));
     }
 
