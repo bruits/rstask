@@ -58,6 +58,16 @@ pub fn ensure_repo_exists(repo_path: &Path) -> Result<()> {
 pub fn git_commit(repo_path: &Path, message: &str) -> Result<()> {
     use std::process::Command;
 
+    // Check if repo is brand new (needed before diff-index to avoid missing HEAD error)
+    let objects_dir = repo_path.join(".git/objects");
+    let brand_new = if let Ok(entries) = std::fs::read_dir(&objects_dir) {
+        entries.count() <= 2
+    } else {
+        return Err(crate::RstaskError::Other(
+            "failed to read git objects directory".to_string(),
+        ));
+    };
+
     // Add all files
     let add_status = Command::new("git")
         .args(["-C", &repo_path.to_string_lossy(), "add", "."])
@@ -67,24 +77,26 @@ pub fn git_commit(repo_path: &Path, message: &str) -> Result<()> {
         return Err(crate::RstaskError::Other("git add failed".to_string()));
     }
 
-    // Check if there are changes to commit
-    let diff_status = Command::new("git")
-        .args([
-            "-C",
-            &repo_path.to_string_lossy(),
-            "diff-index",
-            "--quiet",
-            "HEAD",
-            "--",
-        ])
-        .status();
+    // Check for changes -- only if repo has commits (to avoid missing HEAD error)
+    if !brand_new {
+        let diff_status = Command::new("git")
+            .args([
+                "-C",
+                &repo_path.to_string_lossy(),
+                "diff-index",
+                "--quiet",
+                "HEAD",
+                "--",
+            ])
+            .status();
 
-    // If diff-index returns 0, no changes
-    if let Ok(status) = diff_status
-        && status.success()
-    {
-        eprintln!("No changes detected");
-        return Ok(());
+        // If diff-index returns 0, no changes
+        if let Ok(status) = diff_status
+            && status.success()
+        {
+            println!("No changes detected");
+            return Ok(());
+        }
     }
 
     // Commit with output shown
@@ -107,43 +119,37 @@ pub fn git_commit(repo_path: &Path, message: &str) -> Result<()> {
 }
 
 pub fn git_pull(repo_path: &str) -> Result<()> {
-    let repo = Repository::open(repo_path)?;
+    use std::process::Command;
 
-    // Fetch from origin
-    let mut remote = repo.find_remote("origin")?;
-    remote.fetch(&["master"], None, None)?;
+    let status = Command::new("git")
+        .args([
+            "-C",
+            repo_path,
+            "pull",
+            "--ff",
+            "--no-rebase",
+            "--no-edit",
+            "--commit",
+        ])
+        .status()?;
 
-    // Merge FETCH_HEAD into current branch
-    let fetch_head = repo.find_reference("FETCH_HEAD")?;
-    let fetch_commit = repo.reference_to_annotated_commit(&fetch_head)?;
-
-    let analysis = repo.merge_analysis(&[&fetch_commit])?;
-
-    if analysis.0.is_up_to_date() {
-        // Already up to date
-        Ok(())
-    } else if analysis.0.is_fast_forward() {
-        // Fast-forward merge
-        let refname = "refs/heads/master";
-        let mut reference = repo.find_reference(refname)?;
-        reference.set_target(fetch_commit.id(), "Fast-Forward")?;
-        repo.set_head(refname)?;
-        repo.checkout_head(Some(git2::build::CheckoutBuilder::default().force()))?;
-        Ok(())
-    } else {
-        // Would require actual merge - for now just error
-        Err(crate::RstaskError::Git(git2::Error::from_str(
-            "merge required",
-        )))
+    if !status.success() {
+        return Err(crate::RstaskError::Other("git pull failed".to_string()));
     }
+
+    Ok(())
 }
 
 pub fn git_push(repo_path: &str) -> Result<()> {
-    let repo = Repository::open(repo_path)?;
-    let mut remote = repo.find_remote("origin")?;
+    use std::process::Command;
 
-    // Push master branch
-    remote.push(&["refs/heads/master:refs/heads/master"], None)?;
+    let status = Command::new("git")
+        .args(["-C", repo_path, "push"])
+        .status()?;
+
+    if !status.success() {
+        return Err(crate::RstaskError::Other("git push failed".to_string()));
+    }
 
     Ok(())
 }

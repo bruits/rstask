@@ -104,12 +104,11 @@ fn main() {
                 eprintln!("Git command requires arguments");
                 process::exit(1);
             }
-            // Use git2-rs or run git command directly
-            rstask_core::util::run_cmd("git", &["-C", conf.repo.to_str().unwrap()]).and_then(|_| {
-                // Now run the actual git subcommand
-                let git_args: Vec<&str> = args[1..].iter().map(|s| s.as_str()).collect();
-                rstask_core::util::run_cmd("git", &git_args)
-            })
+            // Build git args: -C <repo> <subcommand> [args...]
+            let mut git_args = vec!["-C", conf.repo.to_str().unwrap()];
+            let subcommand_args: Vec<&str> = args[1..].iter().map(|s| s.as_str()).collect();
+            git_args.extend(subcommand_args);
+            rstask_core::util::run_cmd("git", &git_args)
         }
         CMD_SHOW_ACTIVE => cmd_show_active(&conf, &ctx, &query),
         CMD_SHOW_PAUSED => cmd_show_paused(&conf, &ctx, &query),
