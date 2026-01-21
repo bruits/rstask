@@ -1,10 +1,10 @@
 // TaskSet - collection of tasks with filtering and loading capabilities
+use crate::Result;
 use crate::constants::*;
 use crate::local_state::{load_ids, save_ids};
 use crate::query::Query;
 use crate::table::RowStyle;
-use crate::task::{unmarshal_task, Task};
-use crate::Result;
+use crate::task::{Task, unmarshal_task};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -235,7 +235,7 @@ impl TaskSet {
         let idx = *self
             .tasks_by_uuid
             .get(&task.uuid)
-            .ok_or_else(|| crate::DstaskError::TaskNotFound(task.uuid.clone()))?;
+            .ok_or_else(|| crate::rstaskError::TaskNotFound(task.uuid.clone()))?;
 
         let old = &self.tasks[idx];
 
@@ -243,7 +243,7 @@ impl TaskSet {
         if old.status != task.status
             && !crate::constants::is_valid_status_transition(&old.status, &task.status)
         {
-            return Err(crate::DstaskError::InvalidStatusTransition(
+            return Err(crate::rstaskError::InvalidStatusTransition(
                 old.status.clone(),
                 task.status.clone(),
             ));
@@ -254,7 +254,7 @@ impl TaskSet {
             && task.status == STATUS_RESOLVED
             && task.notes.contains("- [ ] ")
         {
-            return Err(crate::DstaskError::Other(
+            return Err(crate::rstaskError::Other(
                 "Refusing to resolve task with incomplete checklist".to_string(),
             ));
         }
@@ -471,7 +471,7 @@ impl TaskSet {
         let idx = *self
             .tasks_by_uuid
             .get(uuid)
-            .ok_or_else(|| crate::DstaskError::TaskNotFound(uuid.to_string()))?;
+            .ok_or_else(|| crate::rstaskError::TaskNotFound(uuid.to_string()))?;
 
         let task = &self.tasks[idx];
 

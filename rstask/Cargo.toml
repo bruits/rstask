@@ -1,13 +1,13 @@
 [package]
-name = "dstask"
+name = "rstask"
 version = "0.26.0"
-edition = "2021"
+edition = "2024"
 license = "MIT"
 
 [[bin]]
-name = "dstask"
+name = "rstask"
 path = "src/main.rs"
 
 [dependencies]
-dstask-core = { path = "../dstask-core" }
+rstask-core = { path = "../rstask-core" }
 anyhow.workspace = true

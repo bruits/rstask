@@ -14,7 +14,7 @@ pub mod taskset;
 pub mod util;
 
 pub use config::Config;
-pub use error::{DstaskError, Result};
+pub use error::{Result, rstaskError};
 pub use query::Query;
 pub use task::{SubTask, Task};
 pub use taskset::TaskSet;

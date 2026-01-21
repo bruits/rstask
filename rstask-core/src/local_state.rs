@@ -1,7 +1,7 @@
 // Local state management for context and ID mapping
-use crate::error::DstaskError;
-use crate::query::Query;
 use crate::Result;
+use crate::error::rstaskError;
+use crate::query::Query;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -32,11 +32,11 @@ impl LocalState {
     /// Set the context
     pub fn set_context(&mut self, context: Query) -> Result<()> {
         if !context.ids.is_empty() {
-            return Err(DstaskError::Parse("context cannot contain IDs".to_string()));
+            return Err(rstaskError::Parse("context cannot contain IDs".to_string()));
         }
 
         if !context.text.is_empty() {
-            return Err(DstaskError::Parse(
+            return Err(rstaskError::Parse(
                 "context cannot contain text".to_string(),
             ));
         }

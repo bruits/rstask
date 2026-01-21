@@ -1,10 +1,10 @@
+use crate::Result;
 use crate::constants::*;
 use crate::query::Query;
 use crate::table::{RowStyle, Table};
 use crate::task::Task;
 use crate::taskset::TaskSet;
 use crate::util::{get_term_size, stdout_is_tty};
-use crate::Result;
 use chrono::{Datelike, Utc};
 
 impl Task {
@@ -17,11 +17,7 @@ impl Task {
         let resolved = self.status == STATUS_RESOLVED;
 
         let get_fg = |normal_color: u8, active_color: u8| -> u8 {
-            if active {
-                active_color
-            } else {
-                normal_color
-            }
+            if active { active_color } else { normal_color }
         };
 
         // Determine foreground color based on priority and due date
@@ -131,7 +127,7 @@ impl TaskSet {
 
             if critical_in_view < total_critical {
                 println!(
-                    "\x1b[38;5;{}m{} critical task(s) outside this context! Use `dstask -- P0` to see them.\x1b[0m",
+                    "\x1b[38;5;{}m{} critical task(s) outside this context! Use `rstask -- P0` to see them.\x1b[0m",
                     FG_PRIORITY_CRITICAL,
                     total_critical - critical_in_view
                 );
@@ -162,12 +158,12 @@ impl TaskSet {
         let total = tasks.len();
 
         if self.tasks().is_empty() {
-            println!("No tasks found. Run `dstask help` for instructions.");
+            println!("No tasks found. Run `rstask help` for instructions.");
             return Ok(());
         }
 
         if tasks.is_empty() {
-            return Err(crate::DstaskError::Other(
+            return Err(crate::rstaskError::Other(
                 "No matching tasks in given context or filter.".to_string(),
             ));
         }

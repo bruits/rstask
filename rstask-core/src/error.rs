@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum DstaskError {
+pub enum rstaskError {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
 
@@ -45,4 +45,4 @@ pub enum DstaskError {
     Other(String),
 }
 
-pub type Result<T> = std::result::Result<T, DstaskError>;
+pub type Result<T> = std::result::Result<T, rstaskError>;

@@ -20,7 +20,7 @@ pub fn git_commit(repo_path: &Path, message: &str) -> Result<()> {
         .status()?;
 
     if !add_status.success() {
-        return Err(crate::DstaskError::Other("git add failed".to_string()));
+        return Err(crate::rstaskError::Other("git add failed".to_string()));
     }
 
     // Check if there are changes to commit
@@ -56,7 +56,7 @@ pub fn git_commit(repo_path: &Path, message: &str) -> Result<()> {
         .status()?;
 
     if !commit_status.success() {
-        return Err(crate::DstaskError::Other("git commit failed".to_string()));
+        return Err(crate::rstaskError::Other("git commit failed".to_string()));
     }
 
     Ok(())
@@ -88,7 +88,7 @@ pub fn git_pull(repo_path: &str) -> Result<()> {
         Ok(())
     } else {
         // Would require actual merge - for now just error
-        Err(crate::DstaskError::Git(git2::Error::from_str(
+        Err(crate::rstaskError::Git(git2::Error::from_str(
             "merge required",
         )))
     }
@@ -112,7 +112,7 @@ pub fn git_reset(repo_path: &Path) -> Result<()> {
     let head_commit = head.peel_to_commit()?;
 
     let parent = head_commit.parent(0).map_err(|_| {
-        crate::DstaskError::Git(git2::Error::from_str("no parent commit to reset to"))
+        crate::rstaskError::Git(git2::Error::from_str("no parent commit to reset to"))
     })?;
 
     repo.reset(parent.as_object(), git2::ResetType::Hard, None)?;

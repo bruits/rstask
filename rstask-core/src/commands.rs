@@ -1,7 +1,7 @@
 use crate::{
     config::Config,
     constants::*,
-    error::{DstaskError, Result},
+    error::{Result, rstaskError},
     git::git_commit,
     local_state::LocalState,
     query::Query,
@@ -15,13 +15,13 @@ use std::io::{self, Write};
 /// Add a new task to the task database
 pub fn cmd_add(conf: &Config, ctx: &Query, query: &Query) -> Result<()> {
     if query.text.is_empty() && query.template == 0 {
-        return Err(DstaskError::Parse(
+        return Err(rstaskError::Parse(
             "task description or template required".to_string(),
         ));
     }
 
     if !query.date_filter.is_empty() && query.date_filter != "in" && query.date_filter != "on" {
-        return Err(DstaskError::Parse(
+        return Err(rstaskError::Parse(
             "cannot use date filter with add command".to_string(),
         ));
     }
@@ -59,7 +59,7 @@ pub fn cmd_add(conf: &Config, ctx: &Query, query: &Query) -> Result<()> {
         if template.status != STATUS_TEMPLATE {
             println!(
                 "\nYou've copied an open task!\n\
-                To learn more about creating templates enter 'dstask help template'\n"
+                To learn more about creating templates enter 'rstask help template'\n"
             );
         }
     } else if !query.text.is_empty() {
@@ -114,7 +114,7 @@ pub fn cmd_context(
 /// Mark tasks as done/resolved
 pub fn cmd_done(conf: &Config, ctx: &Query, query: &Query) -> Result<()> {
     if query.ids.is_empty() {
-        return Err(DstaskError::Parse(
+        return Err(rstaskError::Parse(
             "at least one task ID required".to_string(),
         ));
     }
@@ -126,7 +126,7 @@ pub fn cmd_done(conf: &Config, ctx: &Query, query: &Query) -> Result<()> {
         let task = ts.must_get_by_id(*id);
 
         if task.status == STATUS_RESOLVED {
-            return Err(DstaskError::Other(format!(
+            return Err(rstaskError::Other(format!(
                 "task {} is already resolved",
                 id
             )));
@@ -161,7 +161,7 @@ pub fn cmd_edit(conf: &Config, _ctx: &Query, query: &Query) -> Result<()> {
     use crate::util::{edit_string, is_valid_uuid4_string};
 
     if query.ids.len() != 1 {
-        return Err(DstaskError::Parse(
+        return Err(rstaskError::Parse(
             "exactly one task ID required".to_string(),
         ));
     }
@@ -179,11 +179,11 @@ pub fn cmd_edit(conf: &Config, _ctx: &Query, query: &Query) -> Result<()> {
     // Validate UUID hasn't changed
     if edited_task.uuid != task.uuid {
         if is_valid_uuid4_string(&edited_task.uuid) {
-            return Err(DstaskError::Parse(
+            return Err(rstaskError::Parse(
                 "task ID must not be edited (UUID field in yaml)".to_string(),
             ));
         } else {
-            return Err(DstaskError::InvalidUuid(edited_task.uuid.clone()));
+            return Err(rstaskError::InvalidUuid(edited_task.uuid.clone()));
         }
     }
 
@@ -220,7 +220,7 @@ pub fn cmd_log(conf: &Config, ctx: &Query, query: &Query) -> Result<()> {
 /// Modify existing tasks
 pub fn cmd_modify(conf: &Config, ctx: &Query, query: &Query) -> Result<()> {
     if query.ids.is_empty() {
-        return Err(DstaskError::Parse(
+        return Err(rstaskError::Parse(
             "at least one task ID required".to_string(),
         ));
     }
@@ -268,7 +268,7 @@ pub fn cmd_note(conf: &Config, _ctx: &Query, query: &Query) -> Result<()> {
     use crate::util::edit_string;
 
     if query.ids.len() != 1 {
-        return Err(DstaskError::Parse(
+        return Err(rstaskError::Parse(
             "exactly one task ID required".to_string(),
         ));
     }
@@ -293,7 +293,7 @@ pub fn cmd_note(conf: &Config, _ctx: &Query, query: &Query) -> Result<()> {
 /// Open/reopen tasks (move from resolved to pending)
 pub fn cmd_open(conf: &Config, _ctx: &Query, query: &Query) -> Result<()> {
     if query.ids.is_empty() {
-        return Err(DstaskError::Parse(
+        return Err(rstaskError::Parse(
             "at least one task ID required".to_string(),
         ));
     }
@@ -304,7 +304,7 @@ pub fn cmd_open(conf: &Config, _ctx: &Query, query: &Query) -> Result<()> {
         let task = ts.must_get_by_id(*id);
 
         if task.status != STATUS_RESOLVED {
-            return Err(DstaskError::Other(format!("task {} is not resolved", id)));
+            return Err(rstaskError::Other(format!("task {} is not resolved", id)));
         }
 
         let mut task = task.clone();
@@ -333,7 +333,7 @@ pub fn cmd_open(conf: &Config, _ctx: &Query, query: &Query) -> Result<()> {
 /// Remove/delete tasks
 pub fn cmd_remove(conf: &Config, _ctx: &Query, query: &Query) -> Result<()> {
     if query.ids.is_empty() {
-        return Err(DstaskError::Parse(
+        return Err(rstaskError::Parse(
             "at least one task ID required".to_string(),
         ));
     }
@@ -484,7 +484,7 @@ pub fn cmd_show_templates(conf: &Config, ctx: &Query, query: &Query) -> Result<(
 pub fn cmd_show_unorganised(conf: &Config, ctx: &Query, query: &Query) -> Result<()> {
     // Go version explicitly rejects using query/context for show-unorganised
     if !query.ids.is_empty() || query.has_operators() {
-        return Err(DstaskError::Other(
+        return Err(rstaskError::Other(
             "query/context not used for show-unorganised".to_string(),
         ));
     }
@@ -501,7 +501,7 @@ pub fn cmd_show_unorganised(conf: &Config, ctx: &Query, query: &Query) -> Result
 /// Start/activate a task
 pub fn cmd_start(conf: &Config, _ctx: &Query, query: &Query) -> Result<()> {
     if query.ids.is_empty() {
-        return Err(DstaskError::Parse(
+        return Err(rstaskError::Parse(
             "at least one task ID required".to_string(),
         ));
     }
@@ -512,7 +512,7 @@ pub fn cmd_start(conf: &Config, _ctx: &Query, query: &Query) -> Result<()> {
         let task = ts.must_get_by_id(*id);
 
         if task.status != STATUS_PENDING && task.status != STATUS_PAUSED {
-            return Err(DstaskError::InvalidStatusTransition(
+            return Err(rstaskError::InvalidStatusTransition(
                 task.status.clone(),
                 STATUS_ACTIVE.to_string(),
             ));
@@ -543,7 +543,7 @@ pub fn cmd_start(conf: &Config, _ctx: &Query, query: &Query) -> Result<()> {
 /// Stop/pause an active task
 pub fn cmd_stop(conf: &Config, _ctx: &Query, query: &Query) -> Result<()> {
     if query.ids.is_empty() {
-        return Err(DstaskError::Parse(
+        return Err(rstaskError::Parse(
             "at least one task ID required".to_string(),
         ));
     }
@@ -554,7 +554,7 @@ pub fn cmd_stop(conf: &Config, _ctx: &Query, query: &Query) -> Result<()> {
         let task = ts.must_get_by_id(*id);
 
         if task.status != STATUS_ACTIVE {
-            return Err(DstaskError::InvalidStatusTransition(
+            return Err(rstaskError::InvalidStatusTransition(
                 task.status.clone(),
                 STATUS_PAUSED.to_string(),
             ));
@@ -628,7 +628,7 @@ pub fn cmd_template(conf: &Config, ctx: &Query, query: &Query) -> Result<()> {
         ts.save_pending_changes()?;
         git_commit(&conf.repo, &format!("Created template: {}", task.summary))?;
     } else {
-        return Err(DstaskError::Parse(
+        return Err(rstaskError::Parse(
             "task ID or description required for template".to_string(),
         ));
     }
@@ -657,5 +657,5 @@ pub fn cmd_undo(conf: &Config, args: &[String]) -> Result<()> {
 
 /// Display version information
 pub fn cmd_version() {
-    println!("dstask {}", env!("CARGO_PKG_VERSION"));
+    println!("rstask {}", env!("CARGO_PKG_VERSION"));
 }

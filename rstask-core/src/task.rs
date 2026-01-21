@@ -7,7 +7,7 @@ use crate::constants::*;
 use crate::date_util::format_due_date;
 use crate::query::Query;
 use crate::util::{is_valid_uuid4_string, must_get_repo_path};
-use crate::{DstaskError, Result};
+use crate::{Result, rstaskError};
 
 // Custom serialization module for DateTime fields to match Go's RFC3339 format
 mod datetime_rfc3339 {
@@ -299,20 +299,20 @@ impl Task {
     /// Validates task data
     pub fn validate(&self) -> Result<()> {
         if !is_valid_uuid4_string(&self.uuid) {
-            return Err(DstaskError::InvalidUuid(self.uuid.clone()));
+            return Err(rstaskError::InvalidUuid(self.uuid.clone()));
         }
 
         if !is_valid_status(&self.status) {
-            return Err(DstaskError::InvalidStatus(self.status.clone()));
+            return Err(rstaskError::InvalidStatus(self.status.clone()));
         }
 
         if !is_valid_priority(&self.priority) {
-            return Err(DstaskError::InvalidPriority(self.priority.clone()));
+            return Err(rstaskError::InvalidPriority(self.priority.clone()));
         }
 
         for dep_uuid in &self.dependencies {
             if !is_valid_uuid4_string(dep_uuid) {
-                return Err(DstaskError::InvalidUuid(dep_uuid.clone()));
+                return Err(rstaskError::InvalidUuid(dep_uuid.clone()));
             }
         }
 
@@ -466,7 +466,7 @@ pub fn unmarshal_task(
     status: &str,
 ) -> Result<Task> {
     if filename.len() != TASK_FILENAME_LEN {
-        return Err(DstaskError::Parse(format!(
+        return Err(rstaskError::Parse(format!(
             "filename does not encode UUID {} (wrong length)",
             filename
         )));
@@ -474,7 +474,7 @@ pub fn unmarshal_task(
 
     let uuid = &filename[0..36];
     if !is_valid_uuid4_string(uuid) {
-        return Err(DstaskError::Parse(format!(
+        return Err(rstaskError::Parse(format!(
             "filename does not encode UUID {}",
             filename
         )));

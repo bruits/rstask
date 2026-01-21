@@ -2,7 +2,7 @@ use lazy_static::lazy_static;
 use std::env;
 
 lazy_static! {
-    pub static ref FAKE_PTY: bool = env::var("DSTASK_FAKE_PTY").is_ok();
+    pub static ref FAKE_PTY: bool = env::var("rstask_FAKE_PTY").is_ok();
 }
 
 // Build info - will be populated by build script or environment at compile time

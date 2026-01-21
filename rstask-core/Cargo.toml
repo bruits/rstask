@@ -1,5 +1,5 @@
 [package]
-name = "dstask-core"
+name = "rstask-core"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true

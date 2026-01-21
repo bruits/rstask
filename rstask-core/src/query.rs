@@ -1,7 +1,7 @@
+use crate::Result;
 use crate::constants::*;
 use crate::date_util::parse_due_date_arg;
 use crate::util::slice_contains;
-use crate::Result;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -82,8 +82,8 @@ impl Query {
 
     /// Prints context description with color
     pub fn print_context_description(&self) {
-        let env_var_notification = if std::env::var("DSTASK_CONTEXT").is_ok() {
-            " (set by DSTASK_CONTEXT)"
+        let env_var_notification = if std::env::var("rstask_CONTEXT").is_ok() {
+            " (set by rstask_CONTEXT)"
         } else {
             ""
         };
@@ -195,7 +195,7 @@ pub fn parse_query(args: &[String]) -> Result<Query> {
             query.anti_projects.push(lc_item[9..].to_string());
         } else if lc_item.starts_with("due.") || lc_item.starts_with("due:") {
             if due_date_set {
-                return Err(crate::DstaskError::Parse(
+                return Err(crate::rstaskError::Parse(
                     "Query should only have one due date".to_string(),
                 ));
             }

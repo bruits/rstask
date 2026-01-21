@@ -1,5 +1,5 @@
-use crate::constants::*;
 use crate::Result;
+use crate::constants::*;
 use std::io::{self, Write};
 use std::process::{Command, Stdio};
 use uuid::Uuid;
@@ -46,7 +46,7 @@ pub fn run_cmd(name: &str, args: &[&str]) -> Result<()> {
         .status()?;
 
     if !status.success() {
-        return Err(crate::DstaskError::Other(format!(
+        return Err(crate::rstaskError::Other(format!(
             "Command {} failed with status: {}",
             name, status
         )));
@@ -85,7 +85,7 @@ pub fn make_temp_filename(id: i32, summary: &str, ext: &str) -> String {
     }
 
     let lowered = truncated.to_lowercase();
-    format!("dstask.*.{}-{}.{}", id, lowered, ext)
+    format!("rstask.*.{}-{}.{}", id, lowered, ext)
 }
 
 /// Opens an editor to edit bytes, returns the edited content
@@ -94,7 +94,7 @@ pub fn must_edit_bytes(data: &[u8], tmp_filename: &str) -> Result<Vec<u8>> {
     let editor_parts: Vec<&str> = editor.split_whitespace().collect();
 
     if editor_parts.is_empty() {
-        return Err(crate::DstaskError::Other("EDITOR is empty".to_string()));
+        return Err(crate::rstaskError::Other("EDITOR is empty".to_string()));
     }
 
     let mut tmpfile = tempfile::Builder::new()
@@ -120,7 +120,7 @@ pub fn must_edit_bytes(data: &[u8], tmp_filename: &str) -> Result<Vec<u8>> {
         .status()?;
 
     if !status.success() {
-        return Err(crate::DstaskError::Other(
+        return Err(crate::rstaskError::Other(
             "Failed to run $EDITOR".to_string(),
         ));
     }
@@ -131,7 +131,7 @@ pub fn must_edit_bytes(data: &[u8], tmp_filename: &str) -> Result<Vec<u8>> {
 
 /// Opens an editor to edit a string, returns the edited content
 pub fn edit_string(content: &str) -> Result<String> {
-    let bytes = must_edit_bytes(content.as_bytes(), "dstask-edit.txt")?;
+    let bytes = must_edit_bytes(content.as_bytes(), "rstask-edit.txt")?;
     Ok(String::from_utf8_lossy(&bytes).to_string())
 }
 
@@ -174,7 +174,7 @@ pub fn must_open_browser(url: &str) -> Result<()> {
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
-        .map_err(|_| crate::DstaskError::Other("Failed to open browser".to_string()))?;
+        .map_err(|_| crate::rstaskError::Other("Failed to open browser".to_string()))?;
 
     Ok(())
 }
@@ -220,18 +220,18 @@ mod tests {
 
     #[test]
     fn test_make_temp_filename() {
-        assert_eq!(make_temp_filename(1, "& &", "md"), "dstask.*.1-.md");
+        assert_eq!(make_temp_filename(1, "& &", "md"), "rstask.*.1-.md");
         assert_eq!(
             make_temp_filename(99, "A simple summary!", "md"),
-            "dstask.*.99-a-simple-summary.md"
+            "rstask.*.99-a-simple-summary.md"
         );
         assert_eq!(
             make_temp_filename(1, "& that's that.", "md"),
-            "dstask.*.1-thats-that.md"
+            "rstask.*.1-thats-that.md"
         );
         assert_eq!(
             make_temp_filename(2147483647, "J's $100, != €100", "md"),
-            "dstask.*.2147483647-js-100-100.md"
+            "rstask.*.2147483647-js-100-100.md"
         );
     }
 

@@ -92,7 +92,7 @@ pub fn parse_str_to_date(date_str: &str) -> Result<chrono::DateTime<Local>> {
         }
     }
 
-    Err(crate::DstaskError::Parse(format!(
+    Err(crate::rstaskError::Parse(format!(
         "Invalid due date format: {}\nExpected format: YYYY-MM-DD, MM-DD or DD, relative date like 'next-monday', 'today', etc.",
         date_str
     )))
@@ -102,7 +102,7 @@ pub fn parse_str_to_date(date_str: &str) -> Result<chrono::DateTime<Local>> {
 pub fn parse_due_date_arg(due_str: &str) -> Result<(String, chrono::DateTime<Local>)> {
     let parts: Vec<&str> = due_str.splitn(2, ':').collect();
     if parts.len() != 2 {
-        return Err(crate::DstaskError::Parse(format!(
+        return Err(crate::rstaskError::Parse(format!(
             "Invalid due query format: {}\nExpected format: due:YYYY-MM-DD, due:MM-DD, due:DD, due:next-monday, due:today, etc.",
             due_str
         )));
@@ -122,7 +122,7 @@ pub fn parse_due_date_arg(due_str: &str) -> Result<(String, chrono::DateTime<Loc
         match filter {
             "after" | "before" | "on" | "in" => filter.to_string(),
             _ => {
-                return Err(crate::DstaskError::Parse(format!(
+                return Err(crate::rstaskError::Parse(format!(
                     "Invalid date filter format: {}\nValid filters are: after, before, on, in",
                     filter
                 )));

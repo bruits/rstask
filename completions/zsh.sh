@@ -1,9 +1,9 @@
-#compdef dstask
+#compdef rstask
 #autoload
 
 
-_dstask() {
-    compadd -- $(dstask _completions "${words[@]}")
+_rstask() {
+    compadd -- $(rstask _completions "${words[@]}")
 }
 
-compdef _dstask dstask
+compdef _rstask rstask
