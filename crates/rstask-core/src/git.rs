@@ -1,12 +1,56 @@
 // Placeholder for git module - to be implemented
 use crate::Result;
 use git2::Repository;
+use std::io::{self, Write};
 use std::path::Path;
 
+fn is_stdout_tty() -> bool {
+    atty::is(atty::Stream::Stdout)
+}
+
+fn confirm_or_abort(message: &str) -> Result<()> {
+    eprint!("{} [y/n] ", message);
+    io::stderr().flush()?;
+
+    let mut input = String::new();
+    io::stdin().read_line(&mut input)?;
+
+    let normalized = input.trim().to_lowercase();
+    if normalized == "y" || normalized == "yes" {
+        Ok(())
+    } else {
+        Err(crate::RstaskError::Other("Aborted.".to_string()))
+    }
+}
+
 pub fn ensure_repo_exists(repo_path: &Path) -> Result<()> {
-    if !repo_path.exists() {
+    // Check for git required
+    if std::process::Command::new("git")
+        .arg("--version")
+        .output()
+        .is_err()
+    {
+        return Err(crate::RstaskError::Other(
+            "git required, please install".to_string(),
+        ));
+    }
+
+    let git_dir = repo_path.join(".git");
+
+    if !git_dir.exists() {
+        if is_stdout_tty() {
+            confirm_or_abort(&format!(
+                "Could not find dstask repository at {} -- create?",
+                repo_path.display()
+            ))?;
+        }
+
         std::fs::create_dir_all(repo_path)?;
         Repository::init(repo_path)?;
+
+        println!("\nAdd a remote repository with:\n");
+        println!("\trstask git remote add origin <repo>");
+        println!();
     }
     Ok(())
 }

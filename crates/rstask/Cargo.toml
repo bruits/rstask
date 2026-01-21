@@ -12,7 +12,7 @@ name = "rstask"
 path = "src/main.rs"
 
 [dependencies]
-rstask-core = "0.1"
+rstask-core = { version = "0.1", path = "../rstask-core" }
 anyhow.workspace = true
 
 [dev-dependencies]

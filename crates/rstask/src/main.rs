@@ -56,24 +56,25 @@ fn main() {
 
     // Check for context override from environment variable
     if let Ok(ctx_from_env) = env::var("RSTASK_CONTEXT")
-        && !ctx_from_env.is_empty() {
-            if query.cmd == CMD_CONTEXT && args.len() >= 2 {
-                eprintln!("Error: setting context not allowed while RSTASK_CONTEXT is set");
+        && !ctx_from_env.is_empty()
+    {
+        if query.cmd == CMD_CONTEXT && args.len() >= 2 {
+            eprintln!("Error: setting context not allowed while RSTASK_CONTEXT is set");
+            process::exit(1);
+        }
+
+        let ctx_args: Vec<String> = ctx_from_env
+            .split_whitespace()
+            .map(|s| s.to_string())
+            .collect();
+        ctx = match parse_query(&ctx_args) {
+            Ok(q) => q,
+            Err(e) => {
+                eprintln!("Error parsing RSTASK_CONTEXT: {}", e);
                 process::exit(1);
             }
-
-            let ctx_args: Vec<String> = ctx_from_env
-                .split_whitespace()
-                .map(|s| s.to_string())
-                .collect();
-            ctx = match parse_query(&ctx_args) {
-                Ok(q) => q,
-                Err(e) => {
-                    eprintln!("Error parsing RSTASK_CONTEXT: {}", e);
-                    process::exit(1);
-                }
-            };
-        }
+        };
+    }
 
     // Check if we ignore context with the "--" token
     if query.ignore_context {
