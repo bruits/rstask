@@ -33,8 +33,8 @@ impl Query {
 
     /// Prints context description with color
     pub fn print_context_description(&self) {
-        let env_var_notification = if std::env::var("rstask_CONTEXT").is_ok() {
-            " (set by rstask_CONTEXT)"
+        let env_var_notification = if std::env::var("RSTASK_CONTEXT").is_ok() {
+            " (set by RSTASK_CONTEXT)"
         } else {
             ""
         };

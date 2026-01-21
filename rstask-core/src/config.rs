@@ -17,14 +17,14 @@ pub struct Config {
 impl Config {
     /// Creates a new Config from environment variables
     pub fn new() -> Self {
-        let ctx_from_env_var = env::var("rstask_CONTEXT").ok();
+        let ctx_from_env_var = env::var("RSTASK_CONTEXT").ok();
 
         let home = home::home_dir()
             .or_else(|| env::var("HOME").ok().map(PathBuf::from))
             .expect("Could not determine home directory");
 
         let default_repo = home.join(".rstask");
-        let repo = env::var("rstask_GIT_REPO")
+        let repo = env::var("RSTASK_GIT_REPO")
             .map(PathBuf::from)
             .unwrap_or(default_repo);
 

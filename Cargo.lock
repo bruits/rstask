@@ -553,7 +553,10 @@ name = "rstask"
 version = "0.26.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "rstask-core",
+ "serde_json",
+ "tempfile",
 ]
 
 [[package]]

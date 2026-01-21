@@ -55,9 +55,9 @@ fn main() {
     let mut ctx = state.context.clone();
 
     // Check for context override from environment variable
-    if let Ok(ctx_from_env) = env::var("rstask_CONTEXT") {
+    if let Ok(ctx_from_env) = env::var("RSTASK_CONTEXT") {
         if query.cmd == CMD_CONTEXT && args.len() >= 2 {
-            eprintln!("Error: setting context not allowed while rstask_CONTEXT is set");
+            eprintln!("Error: setting context not allowed while RSTASK_CONTEXT is set");
             process::exit(1);
         }
 
@@ -68,7 +68,7 @@ fn main() {
         ctx = match parse_query(&ctx_args) {
             Ok(q) => q,
             Err(e) => {
-                eprintln!("Error parsing rstask_CONTEXT: {}", e);
+                eprintln!("Error parsing RSTASK_CONTEXT: {}", e);
                 process::exit(1);
             }
         };

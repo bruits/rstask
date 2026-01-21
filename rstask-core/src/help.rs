@@ -146,7 +146,7 @@ would then have the tag "work" applied automatically.
 
 To reset to no context, run: rstask context none
 
-Context can also be set with the environment variable rstask_CONTEXT. If set,
+Context can also be set with the environment variable RSTASK_CONTEXT. If set,
 this context string will override the context stored on disk.
 "#
         }
