@@ -1,14 +1,1 @@
-# temporary release description file
-RELEASE.md
-
-# make output
-dist
-
-# Editors and IDEs
-.vscode
-.idea
-
-# Vendor directory
-vendor
-# Added by goreleaser init:
-dist/
+target

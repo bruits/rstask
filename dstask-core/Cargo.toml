@@ -1,0 +1,30 @@
+[package]
+name = "dstask-core"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_yaml.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+git2.workspace = true
+regex.workspace = true
+url.workspace = true
+lazy_static.workspace = true
+home.workspace = true
+bincode.workspace = true
+terminal_size.workspace = true
+termion.workspace = true
+colored.workspace = true
+unicode-width.workspace = true
+tempfile.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
