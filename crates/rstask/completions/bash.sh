@@ -1,25 +1,76 @@
-# wire bash completions to rstask completion engine. Some of the workarounds for
-# idiosyncrasies around separation with colons taken from /etc/bash_completion
-
 _rstask() {
-    # reconstruct COMP_WORDS to re-join separations caused by colon (which is a default separator)
-    # yes, this method ends up splitting by spaces, but that's not a problem for the rstask parser
-    # see http://tiswww.case.edu/php/chet/bash/FAQ
-    original_args=( $(echo "${COMP_WORDS[@]}" | sed 's/ : /:/g' | sed 's/ :$/:/g') )
+    local i cur prev opts cmd
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    cmd="${COMP_WORDS[1]}"
 
-    # hand to rstask as canonical args
-    COMPREPLY=( $(rstask _completions "${original_args[@]}") )
+    # Basic command completion
+    if [[ ${COMP_CWORD} -eq 1 ]] ; then
+        opts="next add remove template log start stop done context modify edit note undo sync git show open show-open show-active show-paused show-resolved show-templates show-unorganised show-projects show-tags completions help"
+        COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+        return 0
+    fi
 
-    # convert rstask's suggestions to remove prefix before colon so complete can understand it
-    local last_arg="${original_args[-1]}"
-    local colon_word=${last_arg%"${last_arg##*:}"}
-    local i=${#COMPREPLY[*]}
-    while [[ $((--i)) -ge 0 ]]; do
-        COMPREPLY[$i]=${COMPREPLY[$i]#"$colon_word"}
-    done
+    # Dynamic completions for specific contexts
+    case "${cmd}" in
+        done|resolve|show|edit|open|stop|start|modify|note|notes)
+            # Task ID completion
+            if [[ "${cur}" =~ ^[0-9] ]] || [[ ${COMP_CWORD} -eq 2 ]]; then
+                local ids=$(rstask _completions ids 2>/dev/null)
+                COMPREPLY=( $(compgen -W "${ids}" -- "${cur}") )
+                return 0
+            fi
+            ;;
+    esac
+
+    # Project completion after project: prefix
+    if [[ "${cur}" == project:* ]]; then
+        local prefix="project:"
+        local search="${cur#project:}"
+        local projects=$(rstask _completions projects 2>/dev/null)
+        local suggestions=()
+        for proj in ${projects}; do
+            suggestions+=("${prefix}${proj}")
+        done
+        COMPREPLY=( $(compgen -W "${suggestions[*]}" -- "${cur}") )
+        return 0
+    fi
+
+    # Tag completion after + prefix
+    if [[ "${cur}" == +* ]]; then
+        local prefix="+"
+        local search="${cur#+}"
+        local tags=$(rstask _completions tags 2>/dev/null)
+        local suggestions=()
+        for tag in ${tags}; do
+            suggestions+=("${prefix}${tag}")
+        done
+        COMPREPLY=( $(compgen -W "${suggestions[*]}" -- "${cur}") )
+        return 0
+    fi
+
+    # Anti-tag completion after - prefix
+    if [[ "${cur}" == -* ]] && [[ ! "${cur}" =~ ^--[a-z] ]]; then
+        local prefix="-"
+        local search="${cur#-}"
+        local tags=$(rstask _completions tags 2>/dev/null)
+        local suggestions=()
+        for tag in ${tags}; do
+            suggestions+=("${prefix}${tag}")
+        done
+        COMPREPLY=( $(compgen -W "${suggestions[*]}" -- "${cur}") )
+        return 0
+    fi
+
+    # Priority completion
+    if [[ "${cur}" == P* ]]; then
+        COMPREPLY=( $(compgen -W "P0 P1 P2 P3" -- "${cur}") )
+        return 0
+    fi
+
+    # Default: no completion
+    return 0
 }
 
 complete -F _rstask rstask
-complete -F _rstask task
-#complete -F _rstask n
-#complete -F _rstask t

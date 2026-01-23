@@ -1,4 +1,5 @@
 mod cli;
+mod completions;
 
 use cli::Cli;
 use rstask_core::commands::*;
@@ -7,6 +8,7 @@ use rstask_core::constants::*;
 use rstask_core::git::ensure_repo_exists;
 use rstask_core::local_state::LocalState;
 use rstask_core::query::{Query, parse_query};
+use rstask_core::taskset::TaskSet;
 use std::env;
 use std::process;
 
@@ -21,20 +23,6 @@ fn main() {
     }
     args.extend(cmd_args);
 
-    // Handle completion commands early (they don't need parsing)
-    if cmd_name == CMD_PRINT_BASH_COMPLETION {
-        print!("{}", include_str!("../completions/bash.sh"));
-        return;
-    }
-    if cmd_name == CMD_PRINT_ZSH_COMPLETION {
-        print!("{}", include_str!("../completions/zsh.sh"));
-        return;
-    }
-    if cmd_name == CMD_PRINT_FISH_COMPLETION {
-        print!("{}", include_str!("../completions/completions.fish"));
-        return;
-    }
-
     // Parse the query using the existing query parser
     let query = match parse_query(&args) {
         Ok(q) => q,
@@ -43,6 +31,53 @@ fn main() {
             process::exit(1);
         }
     };
+
+    // Handle _completions command for dynamic completions
+    if query.cmd == "_completions" {
+        let conf = Config::new();
+        if ensure_repo_exists(&conf.repo).is_err() {
+            // If repo doesn't exist, just exit silently
+            return;
+        }
+
+        let completion_type = if args.len() > 1 {
+            &args[1]
+        } else {
+            return;
+        };
+
+        match completion_type.as_str() {
+            "projects" => {
+                if let Ok(ts) = TaskSet::load(&conf.repo, &conf.ids_file, false) {
+                    let projects = ts.get_projects();
+                    for project in projects {
+                        if !project.name.is_empty() {
+                            println!("{}", project.name);
+                        }
+                    }
+                }
+            }
+            "tags" => {
+                if let Ok(ts) = TaskSet::load(&conf.repo, &conf.ids_file, false) {
+                    let tags = ts.get_tags();
+                    for tag in tags {
+                        println!("{}", tag);
+                    }
+                }
+            }
+            "ids" => {
+                if let Ok(ts) = TaskSet::load(&conf.repo, &conf.ids_file, false) {
+                    let mut ids: Vec<i32> = ts.tasks().iter().map(|t| t.id).collect();
+                    ids.sort();
+                    for id in ids {
+                        println!("{}", id);
+                    }
+                }
+            }
+            _ => {}
+        }
+        return;
+    }
 
     // Initialize config and ensure repo exists
     let conf = Config::new();
@@ -123,10 +158,6 @@ fn main() {
         CMD_SHOW_TEMPLATES => cmd_show_templates(&conf, &ctx, &query),
         CMD_SHOW_RESOLVED => cmd_show_resolved(&conf, &ctx, &query),
         CMD_SHOW_UNORGANISED => cmd_show_unorganised(&conf, &ctx, &query),
-        CMD_COMPLETIONS => {
-            eprintln!("Completions command not yet implemented");
-            process::exit(1);
-        }
         _ => {
             eprintln!("Unknown command: {}", query.cmd);
             process::exit(1);

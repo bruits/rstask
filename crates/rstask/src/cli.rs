@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use clap_complete::Shell;
 
 #[derive(Parser, Debug)]
 #[command(name = "rstask")]
@@ -259,17 +260,21 @@ pub enum Commands {
         args: Vec<String>,
     },
 
-    /// Print bash completion script
-    #[command(name = "bash-completion", hide = true)]
-    BashCompletion,
+    /// Generate shell completions
+    #[command(name = "completions")]
+    Completions {
+        /// Shell to generate completions for
+        #[arg(value_enum)]
+        shell: Shell,
+    },
 
-    /// Print zsh completion script
-    #[command(name = "zsh-completion", hide = true)]
-    ZshCompletion,
-
-    /// Print fish completion script
-    #[command(name = "fish-completion", hide = true)]
-    FishCompletion,
+    /// Internal command for dynamic completions (hidden)
+    #[command(name = "_completions", hide = true)]
+    Complete {
+        /// Completion type: projects, tags, or ids
+        #[arg(value_parser = ["projects", "tags", "ids"])]
+        completion_type: String,
+    },
 }
 
 impl Cli {
@@ -338,9 +343,14 @@ impl Cli {
             Some(Commands::ShowTags { args }) => {
                 ("show-tags".to_string(), maybe_add_context_bypass(args))
             }
-            Some(Commands::BashCompletion) => ("bash-completion".to_string(), vec![]),
-            Some(Commands::ZshCompletion) => ("zsh-completion".to_string(), vec![]),
-            Some(Commands::FishCompletion) => ("fish-completion".to_string(), vec![]),
+            Some(Commands::Completions { shell }) => {
+                // Generate enhanced completions with dynamic data
+                crate::completions::generate_completions(shell, &mut std::io::stdout());
+                std::process::exit(0);
+            }
+            Some(Commands::Complete { completion_type }) => {
+                ("_completions".to_string(), vec![completion_type.clone()])
+            }
             None => {
                 // No subcommand provided - default to "next" command
                 ("next".to_string(), vec![])

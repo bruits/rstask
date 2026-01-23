@@ -14,6 +14,7 @@ path = "src/main.rs"
 [dependencies]
 rstask-core = { version = "0.2.0", path = "../rstask-core" }
 clap.workspace = true
+clap_complete = "4.5"
 
 [dev-dependencies]
 tempfile.workspace = true

@@ -4,9 +4,9 @@ rstask is a Rust port of [dstask](https://github.com/naggie/dstask), which is de
 
 ## Compatibility
 
-rstask implements all of dstask apart from shell completions and the ability to import from github / taskwarrior.
+rstask implements all of dstask apart from the ability to import from github / taskwarrior.
 
-In general, renaming your `.dstask` folder to `.rstask` will generally work. Though, you will lose the current context.
+In general, renaming your `.dstask` folder to `.rstask` will work. Though, you will lose the current context.
 
 ## Future
 
