@@ -26,7 +26,7 @@ fn test_show_open() {
     let tasks = result.parse_tasks();
     assert_eq!(tasks[0].summary, "two", "setting -one as a context");
 
-    let result = cmd.run(&["2", "done"]);
+    let result = cmd.run(&["done", "2"]);
     result.assert_success();
 
     let result = cmd.run(&["show-open"]);

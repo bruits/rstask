@@ -13,7 +13,7 @@ fn test_show_resolved() {
     let result = cmd.run(&["add", "three"]);
     result.assert_success();
 
-    let result = cmd.run(&["1", "done"]);
+    let result = cmd.run(&["done", "1"]);
     result.assert_success();
 
     let result = cmd.run(&["show-resolved"]);
@@ -23,10 +23,10 @@ fn test_show_resolved() {
     assert_eq!(tasks[0].summary, "one", "one should be resolved");
 
     // Test the sorting of resolved tasks
-    let result = cmd.run(&["3", "done"]);
+    let result = cmd.run(&["done", "3"]);
     result.assert_success();
 
-    let result = cmd.run(&["2", "done"]);
+    let result = cmd.run(&["done", "2"]);
     result.assert_success();
 
     let result = cmd.run(&["show-resolved"]);

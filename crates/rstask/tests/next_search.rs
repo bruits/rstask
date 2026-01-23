@@ -11,7 +11,7 @@ fn test_next_search_word() {
     result.assert_success();
 
     // search something that doesn't exist
-    let result = cmd.run(&["somethingRandom"]);
+    let result = cmd.run(&["next", "somethingRandom"]);
     result.assert_success();
 
     let tasks = result.parse_tasks();
@@ -21,14 +21,14 @@ fn test_next_search_word() {
     );
 
     // search the summary of task two
-    let result = cmd.run(&["two"]);
+    let result = cmd.run(&["next", "two"]);
     result.assert_success();
 
     let tasks = result.parse_tasks();
     assert_eq!(tasks[0].summary, "two", "search term should find a task");
 
     // search the notes field of task one
-    let result = cmd.run(&["alpha"]);
+    let result = cmd.run(&["next", "alpha"]);
     result.assert_success();
 
     let tasks = result.parse_tasks();
@@ -49,7 +49,7 @@ fn test_next_search_case_insensitive() {
     result.assert_success();
 
     // search should be case insensitive
-    let result = cmd.run(&["TWO"]);
+    let result = cmd.run(&["next", "TWO"]);
     result.assert_success();
 
     let tasks = result.parse_tasks();
@@ -60,7 +60,7 @@ fn test_next_search_case_insensitive() {
     );
 
     // case insensitive searching of notes field should work
-    let result = cmd.run(&["ALPHA"]);
+    let result = cmd.run(&["next", "ALPHA"]);
     result.assert_success();
 
     let tasks = result.parse_tasks();

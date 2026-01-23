@@ -63,13 +63,13 @@ fn test_next_project_filter() {
     let tasks = result.parse_tasks();
     assert_eq!(tasks[0].summary, "two");
 
-    let result = cmd.run(&["project:house"]);
+    let result = cmd.run(&["next", "project:house"]);
     result.assert_success();
 
     let tasks = result.parse_tasks();
     assert_eq!(tasks[0].summary, "two");
 
-    let result = cmd.run(&["-project:house"]);
+    let result = cmd.run(&["next", "-project:house"]);
     result.assert_success();
 
     let tasks = result.parse_tasks();

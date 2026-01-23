@@ -1,3 +1,6 @@
+mod cli;
+
+use cli::Cli;
 use rstask_core::commands::*;
 use rstask_core::config::Config;
 use rstask_core::constants::*;
@@ -8,8 +11,31 @@ use std::env;
 use std::process;
 
 fn main() {
-    let args: Vec<String> = env::args().skip(1).collect();
+    // Parse CLI arguments using clap
+    let (cmd_name, cmd_args) = Cli::parse_to_command_and_args();
 
+    // Combine command and args for legacy parser
+    let mut args = Vec::new();
+    if !cmd_name.is_empty() {
+        args.push(cmd_name.clone());
+    }
+    args.extend(cmd_args);
+
+    // Handle completion commands early (they don't need parsing)
+    if cmd_name == CMD_PRINT_BASH_COMPLETION {
+        print!("{}", include_str!("../completions/bash.sh"));
+        return;
+    }
+    if cmd_name == CMD_PRINT_ZSH_COMPLETION {
+        print!("{}", include_str!("../completions/zsh.sh"));
+        return;
+    }
+    if cmd_name == CMD_PRINT_FISH_COMPLETION {
+        print!("{}", include_str!("../completions/completions.fish"));
+        return;
+    }
+
+    // Parse the query using the existing query parser
     let query = match parse_query(&args) {
         Ok(q) => q,
         Err(e) => {
@@ -17,31 +43,6 @@ fn main() {
             process::exit(1);
         }
     };
-
-    // Handle commands that don't require initialization
-    match query.cmd.as_str() {
-        CMD_HELP => {
-            cmd_help(&args);
-            return;
-        }
-        CMD_VERSION => {
-            cmd_version();
-            return;
-        }
-        CMD_PRINT_BASH_COMPLETION => {
-            print!("{}", include_str!("../completions/bash.sh"));
-            return;
-        }
-        CMD_PRINT_ZSH_COMPLETION => {
-            print!("{}", include_str!("../completions/zsh.sh"));
-            return;
-        }
-        CMD_PRINT_FISH_COMPLETION => {
-            print!("{}", include_str!("../completions/completions.fish"));
-            return;
-        }
-        _ => {}
-    }
 
     // Initialize config and ensure repo exists
     let conf = Config::new();

@@ -22,6 +22,7 @@ terminal_size = "0.3"
 unicode-width = "0.1"
 atty = "0.2"
 termimad = "0.30"
+clap = { version = "4.5", features = ["derive"] }
 
 # Git integration
 git2 = "0.18"

@@ -10,7 +10,7 @@ fn test_next_by_id_index() {
     let result = cmd.run(&["add", "two", "+two"]);
     result.assert_success();
 
-    let result = cmd.run(&["1"]);
+    let result = cmd.run(&["next", "1"]);
     result.assert_success();
 
     let tasks = result.parse_tasks();
@@ -30,7 +30,7 @@ fn test_next_by_id_index_outside_context() {
     let result = cmd.run(&["context", "+one"]);
     result.assert_success();
 
-    let result = cmd.run(&["2"]);
+    let result = cmd.run(&["next", "2"]);
     result.assert_success();
 
     let tasks = result.parse_tasks();

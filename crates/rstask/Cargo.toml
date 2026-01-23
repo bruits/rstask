@@ -13,6 +13,7 @@ path = "src/main.rs"
 
 [dependencies]
 rstask-core = { version = "0.2.0", path = "../rstask-core" }
+clap.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
