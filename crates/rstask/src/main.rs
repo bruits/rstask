@@ -45,10 +45,13 @@ fn main() {
 
     // Initialize config and ensure repo exists
     let conf = Config::new();
-    if let Err(e) = ensure_repo_exists(&conf.repo) {
-        eprintln!("Error initializing repository: {}", e);
-        process::exit(1);
-    }
+    let repo_was_created = match ensure_repo_exists(&conf.repo) {
+        Ok(created) => created,
+        Err(e) => {
+            eprintln!("Error initializing repository: {}", e);
+            process::exit(1);
+        }
+    };
 
     // Load state for context
     let mut state = LocalState::load(&conf.state_file);
@@ -131,5 +134,13 @@ fn main() {
     if let Err(e) = result {
         eprintln!("Error: {}", e);
         process::exit(1);
+    }
+
+    // Print remote help message if repo was just created and this wasn't a git remote command
+    let is_git_remote_command = query.cmd == CMD_GIT && args.len() >= 2 && args[1] == "remote";
+    if repo_was_created && !is_git_remote_command {
+        println!("\nAdd a remote repository with:\n");
+        println!("\trstask git remote add origin <repo>");
+        println!();
     }
 }

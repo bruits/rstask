@@ -634,59 +634,13 @@ pub fn cmd_stop(conf: &Config, _ctx: &Query, query: &Query) -> Result<()> {
 /// Sync repository with git remote
 pub fn cmd_sync(repo_path: &str) -> Result<()> {
     use crate::git::{git_pull, git_push};
-    use std::process::Command;
 
-    // Check if there are any local commits
-    let has_commits = Command::new("git")
-        .args(["-C", repo_path, "rev-parse", "HEAD"])
-        .output()
-        .map(|output| output.status.success())
-        .unwrap_or(false);
+    // Pull with fast-forward, creating merge commits if needed
+    git_pull(repo_path)?;
 
-    // Try to pull first. If it fails (e.g., no upstream tracking),
-    // we need to handle it based on whether we have local commits
-    if let Err(e) = git_pull(repo_path) {
-        if has_commits {
-            // If pull fails and we have commits, try pushing first (which will set upstream with -u)
-            eprintln!("Pull failed ({}), attempting push first...", e);
-            git_push(repo_path)?;
-            // Now try pulling again
-            git_pull(repo_path)?;
-        } else {
-            // No local commits - this is a fresh repo connecting to existing remote
-            // We need to set up tracking and pull from origin
-            // First, get the current branch name
-            let branch_output = Command::new("git")
-                .args(["-C", repo_path, "branch", "--show-current"])
-                .output()?;
+    // Push changes
+    git_push(repo_path)?;
 
-            let branch = String::from_utf8_lossy(&branch_output.stdout)
-                .trim()
-                .to_string();
-
-            if branch.is_empty() {
-                return Err(crate::RstaskError::Other(
-                    "Not on a branch. Cannot sync.".to_string(),
-                ));
-            }
-
-            // Set upstream and pull
-            let status = Command::new("git")
-                .args(["-C", repo_path, "pull", "--set-upstream", "origin", &branch])
-                .status()?;
-
-            if !status.success() {
-                return Err(crate::RstaskError::Other(
-                    "Failed to pull from remote. Make sure the remote is set up correctly with: rstask git remote add origin <url>".into(),
-                ));
-            }
-        }
-    } else if has_commits {
-        // Pull succeeded, now push if we have commits
-        git_push(repo_path)?;
-    }
-
-    println!("Synced repository");
     Ok(())
 }
 

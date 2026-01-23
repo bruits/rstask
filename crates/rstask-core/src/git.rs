@@ -22,7 +22,7 @@ fn confirm_or_abort(message: &str) -> Result<()> {
     }
 }
 
-pub fn ensure_repo_exists(repo_path: &Path) -> Result<()> {
+pub fn ensure_repo_exists(repo_path: &Path) -> Result<bool> {
     // Check for git required
     if std::process::Command::new("git")
         .arg("--version")
@@ -47,11 +47,10 @@ pub fn ensure_repo_exists(repo_path: &Path) -> Result<()> {
         std::fs::create_dir_all(repo_path)?;
         Repository::init(repo_path)?;
 
-        println!("\nAdd a remote repository with:\n");
-        println!("\trstask git remote add origin <repo>");
-        println!();
+        // Return true to indicate repo was just created
+        return Ok(true);
     }
-    Ok(())
+    Ok(false)
 }
 
 pub fn git_commit(repo_path: &Path, message: &str) -> Result<()> {
@@ -155,23 +154,75 @@ fn has_upstream_branch(repo_path: &str, branch: &str) -> Result<bool> {
     Ok(output.status.success())
 }
 
+fn has_remote(repo_path: &str) -> Result<bool> {
+    use std::process::Command;
+
+    let output = Command::new("git")
+        .args(["-C", repo_path, "remote"])
+        .output()?;
+
+    if !output.status.success() {
+        return Ok(false);
+    }
+
+    let remotes = String::from_utf8_lossy(&output.stdout);
+    Ok(!remotes.trim().is_empty())
+}
+
 pub fn git_pull(repo_path: &str) -> Result<()> {
     use std::process::Command;
 
-    let status = Command::new("git")
-        .args([
-            "-C",
-            repo_path,
-            "pull",
-            "--ff",
-            "--no-rebase",
-            "--no-edit",
-            "--commit",
-        ])
-        .status()?;
+    // Check if a remote is configured
+    if !has_remote(repo_path)? {
+        return Err(crate::RstaskError::Other(
+            "No remote configured. Add a remote with: rstask git remote add origin <url>"
+                .to_string(),
+        ));
+    }
+
+    // Get current branch name
+    let branch = get_current_branch(repo_path)?;
+
+    // Check if upstream is set
+    let has_upstream = has_upstream_branch(repo_path, &branch)?;
+
+    let status = if has_upstream {
+        // Normal pull
+        Command::new("git")
+            .args([
+                "-C",
+                repo_path,
+                "pull",
+                "--ff",
+                "--no-rebase",
+                "--no-edit",
+                "--commit",
+                "--allow-unrelated-histories",
+            ])
+            .status()?
+    } else {
+        // First pull - set upstream tracking
+        Command::new("git")
+            .args([
+                "-C",
+                repo_path,
+                "pull",
+                "--set-upstream",
+                "origin",
+                &branch,
+                "--ff",
+                "--no-rebase",
+                "--no-edit",
+                "--commit",
+                "--allow-unrelated-histories",
+            ])
+            .status()?
+    };
 
     if !status.success() {
-        return Err(crate::RstaskError::Other("git pull failed".to_string()));
+        return Err(crate::RstaskError::Other(
+            "git pull failed. Make sure the remote is set up correctly with: rstask git remote add origin <url>".to_string()
+        ));
     }
 
     Ok(())
@@ -179,6 +230,14 @@ pub fn git_pull(repo_path: &str) -> Result<()> {
 
 pub fn git_push(repo_path: &str) -> Result<()> {
     use std::process::Command;
+
+    // Check if a remote is configured
+    if !has_remote(repo_path)? {
+        return Err(crate::RstaskError::Other(
+            "No remote configured. Add a remote with: rstask git remote add origin <url>"
+                .to_string(),
+        ));
+    }
 
     // Get current branch name
     let branch = get_current_branch(repo_path)?;
