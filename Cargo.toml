@@ -24,6 +24,9 @@ atty = "0.2"
 termimad = "0.34"
 clap = { version = "4.5", features = ["derive"] }
 clap_complete = "4.5"
+ratatui = "0.30"
+crossterm = "0.29"
+mdfrier = { version = "0.2", features = ["ratatui"] }
 
 # Git integration
 git2 = "0.20"

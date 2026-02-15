@@ -130,6 +130,10 @@ pub const VALID_STATUS_TRANSITIONS: &[(&str, &str)] = &[
     (STATUS_PAUSED, STATUS_RESOLVED),
     (STATUS_ACTIVE, STATUS_RESOLVED),
     (STATUS_PENDING, STATUS_TEMPLATE),
+    // Un-resolve: reopen a resolved task
+    (STATUS_RESOLVED, STATUS_PENDING),
+    (STATUS_RESOLVED, STATUS_ACTIVE),
+    (STATUS_RESOLVED, STATUS_PAUSED),
 ];
 
 pub const ALL_CMDS: &[&str] = &[

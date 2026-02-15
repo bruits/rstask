@@ -15,6 +15,10 @@ path = "src/main.rs"
 rstask-core = { version = "0.2.0", path = "../rstask-core" }
 clap.workspace = true
 clap_complete = "4.5"
+ratatui.workspace = true
+crossterm.workspace = true
+chrono.workspace = true
+mdfrier.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true

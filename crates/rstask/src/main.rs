@@ -1,5 +1,6 @@
 mod cli;
 mod completions;
+mod tui;
 
 use cli::Cli;
 use rstask_core::commands::*;
@@ -15,6 +16,23 @@ use std::process;
 fn main() {
     // Parse CLI arguments using clap
     let (cmd_name, cmd_args) = Cli::parse_to_command_and_args();
+
+    // Handle TUI command early - it doesn't use the query system
+    if cmd_name == "tui" {
+        let conf = Config::new();
+        match ensure_repo_exists(&conf.repo) {
+            Ok(_) => {}
+            Err(e) => {
+                eprintln!("Error initializing repository: {}", e);
+                process::exit(1);
+            }
+        }
+        if let Err(e) = tui::run_tui(conf) {
+            eprintln!("TUI error: {}", e);
+            process::exit(1);
+        }
+        return;
+    }
 
     // Combine command and args for legacy parser
     let mut args = Vec::new();
@@ -136,7 +154,7 @@ fn main() {
         CMD_EDIT => cmd_edit(&conf, &ctx, &query),
         CMD_NOTE | CMD_NOTES => cmd_note(&conf, &ctx, &query),
         CMD_UNDO => cmd_undo(&conf, &args),
-        CMD_SYNC => cmd_sync(conf.repo.to_str().unwrap()),
+        CMD_SYNC => cmd_sync(conf.repo.to_str().unwrap(), false).map(|_| ()),
         CMD_GIT => {
             // Git command - run git directly in the repo
             if args.len() < 2 {

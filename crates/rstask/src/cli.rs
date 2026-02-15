@@ -260,6 +260,15 @@ pub enum Commands {
         args: Vec<String>,
     },
 
+    /// Launch interactive TUI mode
+    ///
+    /// Opens a full-screen terminal interface for browsing, filtering,
+    /// and acting on tasks interactively.
+    ///
+    /// Examples:
+    ///   rstask tui
+    Tui,
+
     /// Generate shell completions
     #[command(name = "completions")]
     Completions {
@@ -343,6 +352,7 @@ impl Cli {
             Some(Commands::ShowTags { args }) => {
                 ("show-tags".to_string(), maybe_add_context_bypass(args))
             }
+            Some(Commands::Tui) => ("tui".to_string(), vec![]),
             Some(Commands::Completions { shell }) => {
                 // Generate enhanced completions with dynamic data
                 crate::completions::generate_completions(shell, &mut std::io::stdout());

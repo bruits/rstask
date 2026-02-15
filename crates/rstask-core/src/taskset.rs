@@ -297,9 +297,25 @@ impl TaskSet {
             task.id = 0;
         }
 
+        // Assign a new ID when un-resolving (resolved -> non-resolved)
+        if old.status == STATUS_RESOLVED && task.status != STATUS_RESOLVED && task.id == 0 {
+            for id in 1..=MAX_TASKS_OPEN as i32 {
+                if !self.tasks_by_id.contains_key(&id) {
+                    task.id = id;
+                    self.tasks_by_id.insert(id, idx);
+                    break;
+                }
+            }
+        }
+
         // Set resolved time
         if task.status == STATUS_RESOLVED && task.resolved.is_none() {
             task.resolved = Some(Utc::now());
+        }
+
+        // Clear resolved time when un-resolving
+        if old.status == STATUS_RESOLVED && task.status != STATUS_RESOLVED {
+            task.resolved = None;
         }
 
         task.write_pending = true;

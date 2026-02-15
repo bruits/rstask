@@ -55,7 +55,7 @@ pub fn cmd_add(conf: &Config, ctx: &Query, query: &Query) -> Result<()> {
         task.modify(&merged_query);
         task = ts.must_load_task(task)?;
         ts.save_pending_changes()?;
-        git_commit(&conf.repo, &format!("Added {}", task.summary))?;
+        git_commit(&conf.repo, &format!("Added {}", task.summary), false)?;
 
         if template.status != STATUS_TEMPLATE {
             println!(
@@ -86,7 +86,11 @@ pub fn cmd_add(conf: &Config, ctx: &Query, query: &Query) -> Result<()> {
         // Print feedback message
         println!("Added {}: {}", task.id, task.summary);
 
-        git_commit(&conf.repo, &format!("Added {}: {}", task.id, task.summary))?;
+        git_commit(
+            &conf.repo,
+            &format!("Added {}: {}", task.id, task.summary),
+            false,
+        )?;
     }
 
     auto_sync_if_enabled(conf)?;
@@ -152,6 +156,7 @@ pub fn cmd_done(conf: &Config, _ctx: &Query, query: &Query) -> Result<()> {
     git_commit(
         &conf.repo,
         &format!("Resolved {} {}", query.ids.len(), task_word),
+        false,
     )?;
 
     auto_sync_if_enabled(conf)?;
@@ -188,7 +193,7 @@ pub fn cmd_edit(conf: &Config, _ctx: &Query, query: &Query) -> Result<()> {
     edited_task.write_pending = true;
     ts.must_update_task(edited_task)?;
     ts.save_pending_changes()?;
-    git_commit(&conf.repo, "Edited task")?;
+    git_commit(&conf.repo, "Edited task", false)?;
 
     auto_sync_if_enabled(conf)?;
     Ok(())
@@ -230,7 +235,7 @@ pub fn cmd_log(conf: &Config, ctx: &Query, query: &Query) -> Result<()> {
 
     let task = ts.must_load_task(task)?;
     ts.save_pending_changes()?;
-    git_commit(&conf.repo, &format!("Added {}", task.summary))?;
+    git_commit(&conf.repo, &format!("Added {}", task.summary), false)?;
 
     auto_sync_if_enabled(conf)?;
     Ok(())
@@ -269,7 +274,7 @@ pub fn cmd_modify(conf: &Config, ctx: &Query, query: &Query) -> Result<()> {
             ts.save_pending_changes()?;
 
             if conf.preferences.bulk_commit_strategy == BulkCommitStrategy::PerTask {
-                git_commit(&conf.repo, &format!("Modified {}", task.summary))?;
+                git_commit(&conf.repo, &format!("Modified {}", task.summary), false)?;
             }
         }
 
@@ -278,6 +283,7 @@ pub fn cmd_modify(conf: &Config, ctx: &Query, query: &Query) -> Result<()> {
             git_commit(
                 &conf.repo,
                 &format!("Modified {} {}", task_count, task_word),
+                false,
             )?;
         }
     } else {
@@ -293,7 +299,7 @@ pub fn cmd_modify(conf: &Config, ctx: &Query, query: &Query) -> Result<()> {
             ts.save_pending_changes()?;
 
             if conf.preferences.bulk_commit_strategy == BulkCommitStrategy::PerTask {
-                git_commit(&conf.repo, &format!("Modified {}", task.summary))?;
+                git_commit(&conf.repo, &format!("Modified {}", task.summary), false)?;
             }
         }
 
@@ -302,6 +308,7 @@ pub fn cmd_modify(conf: &Config, ctx: &Query, query: &Query) -> Result<()> {
             git_commit(
                 &conf.repo,
                 &format!("Modified {} {}", task_count, task_word),
+                false,
             )?;
         }
     }
@@ -355,7 +362,7 @@ pub fn cmd_note(conf: &Config, _ctx: &Query, query: &Query) -> Result<()> {
 
     ts.must_update_task(task)?;
     ts.save_pending_changes()?;
-    git_commit(&conf.repo, "Updated task notes")?;
+    git_commit(&conf.repo, "Updated task notes", false)?;
 
     auto_sync_if_enabled(conf)?;
     Ok(())
@@ -446,6 +453,7 @@ pub fn cmd_remove(conf: &Config, _ctx: &Query, query: &Query) -> Result<()> {
     git_commit(
         &conf.repo,
         &format!("Removed {} {}", query.ids.len(), task_word),
+        false,
     )?;
 
     auto_sync_if_enabled(conf)?;
@@ -641,6 +649,7 @@ pub fn cmd_start(conf: &Config, _ctx: &Query, query: &Query) -> Result<()> {
     git_commit(
         &conf.repo,
         &format!("Started {} {}", query.ids.len(), task_word),
+        false,
     )?;
 
     auto_sync_if_enabled(conf)?;
@@ -684,6 +693,7 @@ pub fn cmd_stop(conf: &Config, _ctx: &Query, query: &Query) -> Result<()> {
     git_commit(
         &conf.repo,
         &format!("Stopped {} {}", query.ids.len(), task_word),
+        false,
     )?;
 
     auto_sync_if_enabled(conf)?;
@@ -691,16 +701,16 @@ pub fn cmd_stop(conf: &Config, _ctx: &Query, query: &Query) -> Result<()> {
 }
 
 /// Sync repository with git remote
-pub fn cmd_sync(repo_path: &str) -> Result<()> {
+pub fn cmd_sync(repo_path: &str, quiet: bool) -> Result<String> {
     use crate::git::{git_pull, git_push};
 
     // Pull with fast-forward, creating merge commits if needed
-    git_pull(repo_path)?;
+    let pull_summary = git_pull(repo_path, quiet)?;
 
     // Push changes
-    git_push(repo_path)?;
+    let push_summary = git_push(repo_path, quiet)?;
 
-    Ok(())
+    Ok(format!("{}, {}", pull_summary, push_summary))
 }
 
 /// Automatically sync if configured to do so
@@ -708,7 +718,7 @@ fn auto_sync_if_enabled(conf: &Config) -> Result<()> {
     use crate::preferences::SyncFrequency;
 
     if conf.preferences.sync_frequency == SyncFrequency::AfterEveryModification {
-        cmd_sync(conf.repo.to_str().unwrap())?;
+        cmd_sync(conf.repo.to_str().unwrap(), false).map(|_| ())?;
     }
 
     Ok(())
@@ -732,7 +742,11 @@ pub fn cmd_template(conf: &Config, ctx: &Query, query: &Query) -> Result<()> {
             ts.must_update_task(task.clone())?;
 
             if conf.preferences.bulk_commit_strategy == BulkCommitStrategy::PerTask {
-                git_commit(&conf.repo, &format!("Changed {} to Template", task.summary))?;
+                git_commit(
+                    &conf.repo,
+                    &format!("Changed {} to Template", task.summary),
+                    false,
+                )?;
             }
         }
         ts.save_pending_changes()?;
@@ -742,6 +756,7 @@ pub fn cmd_template(conf: &Config, ctx: &Query, query: &Query) -> Result<()> {
             git_commit(
                 &conf.repo,
                 &format!("Changed {} {} to Template", task_count, task_word),
+                false,
             )?;
         }
     } else if !query.text.is_empty() {
@@ -762,7 +777,11 @@ pub fn cmd_template(conf: &Config, ctx: &Query, query: &Query) -> Result<()> {
 
         task = ts.must_load_task(task)?;
         ts.save_pending_changes()?;
-        git_commit(&conf.repo, &format!("Created template: {}", task.summary))?;
+        git_commit(
+            &conf.repo,
+            &format!("Created template: {}", task.summary),
+            false,
+        )?;
     } else {
         return Err(RstaskError::Parse(
             "task ID or description required for template".to_string(),
