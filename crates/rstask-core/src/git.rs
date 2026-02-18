@@ -110,13 +110,11 @@ pub fn git_commit(repo_path: &Path, message: &str, quiet: bool) -> Result<String
             {
                 return Ok("no changes".to_string());
             }
-        } else {
-            if let Ok(status) = diff_cmd.status()
-                && status.success()
-            {
-                println!("No changes detected");
-                return Ok("no changes".to_string());
-            }
+        } else if let Ok(status) = diff_cmd.status()
+            && status.success()
+        {
+            println!("No changes detected");
+            return Ok("no changes".to_string());
         }
     }
 

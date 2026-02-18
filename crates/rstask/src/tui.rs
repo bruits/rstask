@@ -1,15 +1,15 @@
 use crossterm::{
     event::{self, Event, KeyCode, KeyEvent, KeyModifiers},
     execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 use ratatui::{
+    Frame, Terminal,
     backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Clear, List, ListItem, ListState, Paragraph, Wrap},
-    Frame, Terminal,
 };
 use rstask_core::commands::cmd_sync;
 use rstask_core::config::Config;
@@ -17,11 +17,11 @@ use rstask_core::constants::*;
 use rstask_core::frontmatter::{task_from_markdown, task_to_markdown};
 use rstask_core::git::{git_commit, git_reset};
 use rstask_core::local_state::LocalState;
-use rstask_core::query::{parse_query, Query};
+use rstask_core::query::{Query, parse_query};
 use rstask_core::task::Task;
 use rstask_core::taskset::TaskSet;
 use rstask_core::util::{edit_string, extract_urls, open_browser};
-use std::io;
+use std::{fmt::Display, io};
 
 use chrono::Utc;
 use mdfrier::MdFrier;
@@ -172,11 +172,6 @@ impl NoteEditor {
         }
     }
 
-    /// Get the full note text from the editor buffer
-    fn to_string(&self) -> String {
-        self.lines.join("\n")
-    }
-
     /// Ensure cursor_col is valid for current line
     fn clamp_cursor_col(&mut self) {
         let line_len = self.lines[self.cursor_row].len();
@@ -196,6 +191,12 @@ impl NoteEditor {
         if self.cursor_row >= self.scroll + visible_height {
             self.scroll = self.cursor_row - visible_height + 1;
         }
+    }
+}
+
+impl Display for NoteEditor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.lines.join("\n"))
     }
 }
 
@@ -1402,7 +1403,7 @@ fn ui(f: &mut Frame, app: &mut App) {
     // Compute help hint text so we can determine its height
     let hint_text = build_help_hint(app);
     let hint_height = if term_width > 0 {
-        ((hint_text.len() + term_width - 1) / term_width).max(1) as u16
+        hint_text.len().div_ceil(term_width).max(1) as u16
     } else {
         1
     };
@@ -2126,7 +2127,7 @@ fn draw_confirm_popup(f: &mut Frame, app: &App) {
         None => return,
     };
 
-    let width = (popup.message.len() + 6).max(30).min(60) as u16;
+    let width = (popup.message.len() + 6).clamp(30, 60) as u16;
     let height = 5;
     let area = centered_rect_abs(width, height, f.area());
     f.render_widget(Clear, area);
@@ -2163,7 +2164,7 @@ fn draw_add_input(f: &mut Frame, app: &App) {
         None => return,
     };
 
-    let width = (f.area().width as usize * 70 / 100).max(40).min(80) as u16;
+    let width = (f.area().width as usize * 70 / 100).clamp(40, 80) as u16;
     let height = 7;
     let area = centered_rect_abs(width, height, f.area());
     f.render_widget(Clear, area);

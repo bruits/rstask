@@ -300,9 +300,9 @@ impl TaskSet {
         // Assign a new ID when un-resolving (resolved -> non-resolved)
         if old.status == STATUS_RESOLVED && task.status != STATUS_RESOLVED && task.id == 0 {
             for id in 1..=MAX_TASKS_OPEN as i32 {
-                if !self.tasks_by_id.contains_key(&id) {
+                if let std::collections::hash_map::Entry::Vacant(e) = self.tasks_by_id.entry(id) {
                     task.id = id;
-                    self.tasks_by_id.insert(id, idx);
+                    e.insert(idx);
                     break;
                 }
             }
